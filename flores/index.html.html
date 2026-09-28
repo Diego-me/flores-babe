@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>11</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: #030408;
+      overflow: hidden;
+      font-family: 'Playfair Display', serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ESCENA 1 */
+    #scene1-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transition: opacity 1.8s ease;
+      z-index: 5;
+    }
+    #stage {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #letter-container {
+      position: absolute;
+      top: 15%;
+      left: 7%;
+      width: 44%;
+      max-width: 440px;
+      z-index: 8;
+      opacity: 0;
+      transform: translateY(25px);
+      transition: opacity 2.8s ease, transform 2.8s ease;
+      color: #eaeef5;
+      pointer-events: none;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+    }
+    #letter-container.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .letter-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      color: #ffd166;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      text-shadow: 0 0 14px rgba(255, 209, 102, 0.5);
+    }
+    .letter-body {
+      font-size: 0.95rem;
+      line-height: 1.75;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 20px;
+      color: #f0f3f8;
+    }
+    .letter-body p {
+      margin-bottom: 12px;
+    }
+    .letter-footer {
+      font-family: 'Great Vibes', cursive;
+      font-size: 1.5rem;
+      color: #ffe699;
+      text-shadow: 0 0 10px rgba(255, 230, 153, 0.4);
+    }
+
+    #btn-universe {
+      margin-top: 25px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #ffd166, #f39c12);
+      color: #1a1202;
+      border: none;
+      border-radius: 30px;
+      font-family: 'Playfair Display', serif;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(255, 209, 102, 0.6);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      display: inline-block;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #btn-universe.active {
+      opacity: 1;
+      pointer-events: auto;
+      animation: pulseBtn 2s infinite;
+    }
+    @keyframes pulseBtn {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(255, 209, 102, 0.5); }
+      50% { transform: scale(1.05); box-shadow: 0 0 28px rgba(255, 209, 102, 0.9); }
+    }
+
+    /* ESCENA 2: GALAXIA 3D */
+    #scene2-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 2s ease;
+      z-index: 10;
+    }
+    #scene2-wrapper.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #webgl-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    #webgl-canvas:active {
+      cursor: grabbing;
+    }
+    .galaxy-ui-title {
+      position: absolute;
+      top: 22px;
+      width: 100%;
+      text-align: center;
+      color: #ffe066;
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 10px rgba(255, 170, 0, 0.5);
+      pointer-events: none;
+      z-index: 15;
+    }
+    .galaxy-ui-hint {
+      position: absolute;
+      bottom: 22px;
+      width: 100%;
+      text-align: center;
+      color: #f1f5f9;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      opacity: 0.85;
+      pointer-events: none;
+      z-index: 15;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.9);
+    }
+
+    /* MODAL DE FOTO Y MENSAJE */
+    #modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(3, 4, 8, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+    #modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .modal-card {
+      background: radial-gradient(circle at 50% 15%, #251d12 0%, #0d0c0a 100%);
+      border: 1.8px solid #ffd166;
+      box-shadow: 0 0 40px rgba(255, 209, 102, 0.4), inset 0 0 20px rgba(255, 209, 102, 0.1);
+      border-radius: 22px;
+      width: 90%;
+      max-width: 380px;
+      padding: 24px 20px;
+      text-align: center;
+      transform: scale(0.85);
+      transition: transform 0.45s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    #modal-overlay.open .modal-card {
+      transform: scale(1);
+    }
+    .modal-img-container {
+      width: 100%;
+      height: 240px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 18px;
+      border: 1px solid rgba(255, 215, 0, 0.35);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+      background-color: #000;
+    }
+    .modal-img-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .modal-title {
+      font-family: 'Caveat', cursive;
+      font-size: 2.2rem;
+      color: #ffe066;
+      margin-bottom: 8px;
+      text-shadow: 0 0 12px rgba(255, 224, 102, 0.5);
+    }
+    .modal-desc {
+      font-family: 'Caveat', cursive;
+      font-size: 1.4rem;
+      line-height: 1.4;
+      color: #f8fafc;
+      margin-bottom: 22px;
+      padding: 0 8px;
+    }
+    .modal-close-btn {
+      background: linear-gradient(135deg, rgba(255, 209, 102, 0.15), rgba(255, 209, 102, 0.05));
+      border: 1.2px solid #ffd166;
+      color: #ffe066;
+      padding: 9px 36px;
+      border-radius: 25px;
+      font-size: 1rem;
+      font-family: 'Playfair Display', serif;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .modal-close-btn:hover {
+      background: #ffd166;
+      color: #121008;
+      box-shadow: 0 0 18px rgba(255, 209, 102, 0.7);
+    }
+
+    @media (max-width: 768px) {
+      #letter-container {
+        top: 8%;
+        left: 6%;
+        width: 88%;
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ================= ESCENA 1: EL ÁRBOL ================= -->
+  <div id="scene1-wrapper">
+    <div id="letter-container">
+      <div class="letter-title">🌻 FELIZ DÍA DE LAS FLORES AMARILLAS 🌻</div>
+      <div class="letter-body">
+        <p>CADA GIRASOL QUE VES AQUÍ ES UN LATIDO DE MI CORAZÓN.</p>
+        <p>ASÍ COMO EL SOL ILUMINA LOS CAMPOS, TÚ ILUMINAS MI VIDA.</p>
+        <p>QUE ESTAS DETALLE TE RECUERDEN LO ESPECIAL QUE ERES PARA MÍ.</p>
+        <p style="font-weight: 800; font-size: 1.15rem; color: #ffd166; margin-top: 12px;">- ¡TE AMO!</p>
+      </div>
+      <div class="letter-footer">
+        Eres el sol que ilumina cada uno de mis días. ✨
+      </div>
+      <button id="btn-universe">✨Asi de infinito es lo que siento por ti✨</button>
+    </div>
+
+    <canvas id="stage"></canvas>
+  </div>
+
+  <!-- ================= ESCENA 2: EL UNIVERSO 3D REALISTA ================= -->
+  <div id="scene2-wrapper">
+    <div class="galaxy-ui-title">🌻 Feliz Día de las Flores Amarillas 🌻</div>
+    <div class="galaxy-ui-hint">✨ Eres y seras siempre el amor de mi vida ✨</div>
+    <canvas id="webgl-canvas"></canvas>
+  </div>
+
+  <!-- MODAL PARA FOTOS -->
+  <div id="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-img-container">
+        <img id="modal-img" src="" alt="Recuerdo" />
+      </div>
+      <h3 id="modal-title" class="modal-title">Mi persona favorita</h3>
+      <p id="modal-desc" class="modal-desc">No hace falta un motivo especial. Cualquier día es mejor contigo cerca.</p>
+      <button id="modal-close" class="modal-close-btn">Cerrar</button>
+    </div>
+  </div>
+
+  <script>
+    /* ==============================================================
+       LÓGICA ESCENA 1: ÁRBOL Y CORAZÓN
+       ============================================================== */
+    const canvas1 = document.getElementById("stage");
+    const ctx1 = canvas1.getContext("2d");
+    const letter = document.getElementById("letter-container");
+    const btnUniverse = document.getElementById("btn-universe");
+    const scene1 = document.getElementById("scene1-wrapper");
+    const scene2 = document.getElementById("scene2-wrapper");
+
+    let W, H, groundY;
+
+    function resizeScene1() {
+      W = canvas1.width = window.innerWidth;
+      H = canvas1.height = window.innerHeight;
+      groundY = H * 0.82;
+      if (initialSunflower) {
+        initialSunflower.x = W > 768 ? W * 0.55 : W * 0.5;
+        initialSunflower.y = H * 0.42;
+      }
+    }
+
+    const treeX = () => (W > 768 ? W * 0.72 : W * 0.5);
+
+    const STATE_INIT = 0;
+    const STATE_FALLING = 1;
+    const STATE_GROW_STEM = 2;
+    const STATE_GROW_BRANCHES = 3;
+    const STATE_BLOOM = 4;
+    const STATE_WIND = 5;
+
+    let state = STATE_INIT;
+    let initialSunflower = { x: 0, y: 0, size: 36 };
+    let seed = { x: 0, y: 0, vy: 0, size: 10 };
+    let stemProgress = 0;
+    let branchProgress = 0;
+    let heartFlowers = [];
+    let windParticles = [];
+    let windSpawnTimer = 0;
+
+    class SkyStar {
+      constructor(initial = false) { this.reset(initial); }
+      reset(initial = false) {
+        this.x = Math.random() * W;
+        this.y = initial ? Math.random() * H : -15;
+        this.size = Math.random() * 2 + 0.8;
+        this.vy = Math.random() * 26 + 16;
+        this.vx = (Math.random() - 0.5) * 8;
+        this.alpha = Math.random() * 0.7 + 0.3;
+        this.twinkle = Math.random() * Math.PI * 2;
+        this.twinkleSpeed = Math.random() * 2.5 + 1.2;
+        this.isSparkle = Math.random() < 0.25;
+      }
+      update(dt) {
+        this.y += this.vy * dt;
+        this.x += this.vx * dt;
+        this.twinkle += this.twinkleSpeed * dt;
+        if (this.y > H + 20 || this.x < -20 || this.x > W + 20) this.reset(false);
+      }
+      draw(ctx) {
+        const a = Math.max(0.15, (Math.sin(this.twinkle) * 0.45 + 0.55) * this.alpha);
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.fillStyle = "#fff8e7";
+        ctx.shadowColor = "#ffd166";
+        ctx.shadowBlur = 6;
+        if (this.isSparkle) {
+          ctx.translate(this.x, this.y);
+          ctx.beginPath();
+          for (let i = 0; i < 4; i++) {
+            ctx.rotate(Math.PI / 2);
+            ctx.lineTo(this.size * 2.6, 0);
+            ctx.lineTo(this.size * 0.3, this.size * 0.3);
+          }
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    }
+
+    let stars1 = [];
+    resizeScene1();
+    window.addEventListener("resize", resizeScene1);
+    stars1 = Array.from({ length: 85 }, () => new SkyStar(true));
+
+    function draw2DSunflower(ctx, x, y, radius, rotation = 0, opacity = 1) {
+      if (radius <= 0.5) return;
+      ctx.save();
+      ctx.globalAlpha = opacity;
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+
+      const petals = 16;
+      ctx.fillStyle = "#ffb703";
+      ctx.strokeStyle = "#fb8500";
+      ctx.lineWidth = 0.6;
+      for (let i = 0; i < petals; i++) {
+        ctx.save();
+        ctx.rotate((i * Math.PI * 2) / petals);
+        ctx.beginPath();
+        ctx.ellipse(radius * 0.7, 0, radius * 0.55, radius * 0.22, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.fillStyle = "#fca311";
+      for (let i = 0; i < petals; i++) {
+        ctx.save();
+        ctx.rotate((i * Math.PI * 2) / petals + Math.PI / petals);
+        ctx.beginPath();
+        ctx.ellipse(radius * 0.55, 0, radius * 0.4, radius * 0.18, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.38, 0, Math.PI * 2);
+      ctx.fillStyle = "#3d2314";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.26, 0, Math.PI * 2);
+      ctx.fillStyle = "#1e0f06";
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function buildHeartFlowers(cx, cy, scale, totalCount) {
+      const list = [];
+      const outlineSteps = Math.floor(totalCount * 0.45);
+      for (let i = 0; i < outlineSteps; i++) {
+        const t = (i / outlineSteps) * Math.PI * 2;
+        const hx = 16 * Math.pow(Math.sin(t), 3);
+        const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+        list.push({
+          x: cx + hx * scale + (Math.random() - 0.5) * 6,
+          y: cy + hy * scale + (Math.random() - 0.5) * 6,
+          targetSize: 9 + Math.random() * 4.5,
+          currentSize: 0,
+          angle: Math.random() * Math.PI * 2,
+          delay: Math.random() * 2.2
+        });
+      }
+      const fillCount = totalCount - outlineSteps;
+      for (let i = 0; i < fillCount; i++) {
+        const t = Math.PI - 2 * Math.PI * Math.random();
+        const r = Math.sqrt(Math.random()) * 0.9;
+        const hx = 16 * Math.pow(Math.sin(t), 3);
+        const hy = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+        list.push({
+          x: cx + hx * scale * r,
+          y: cy + hy * scale * r,
+          targetSize: 8 + Math.random() * 5,
+          currentSize: 0,
+          angle: Math.random() * Math.PI * 2,
+          delay: 0.4 + Math.random() * 2.6
+        });
+      }
+      return list;
+    }
+
+    canvas1.addEventListener("click", (e) => {
+      if (state !== STATE_INIT) return;
+      const rect = canvas1.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      if (Math.hypot(mx - initialSunflower.x, my - initialSunflower.y) < 80) {
+        state = STATE_FALLING;
+        seed.x = initialSunflower.x;
+        seed.y = initialSunflower.y;
+        seed.size = initialSunflower.size;
+        seed.vy = 40;
+      }
+    });
+
+    function getBranchTree(tx, gy) {
+      const topStemY = gy - H * 0.38;
+      return [
+        { x0: tx, y0: gy - H * 0.22, cpX: tx - 40, cpY: gy - H * 0.28, x1: tx - 90, y1: gy - H * 0.36 },
+        { x0: tx, y0: gy - H * 0.25, cpX: tx + 40, cpY: gy - H * 0.32, x1: tx + 85, y1: gy - H * 0.39 },
+        { x0: tx, y0: gy - H * 0.30, cpX: tx - 30, cpY: gy - H * 0.38, x1: tx - 60, y1: gy - H * 0.46 },
+        { x0: tx, y0: gy - H * 0.32, cpX: tx + 35, cpY: gy - H * 0.42, x1: tx + 70, y1: gy - H * 0.50 },
+        { x0: tx, y0: topStemY, cpX: tx - 15, cpY: topStemY - 40, x1: tx - 35, y1: topStemY - 70 },
+        { x0: tx, y0: topStemY, cpX: tx + 20, cpY: topStemY - 45, x1: tx + 40, y1: topStemY - 80 }
+      ];
+    }
+
+    let bloomTimeElapsed = 0;
+    let lastTime1 = performance.now();
+
+    function loopScene1(now) {
+      if (scene1.style.display === "none") return;
+      const dt = Math.min((now - lastTime1) / 1000, 0.1);
+      lastTime1 = now;
+
+      const bg = ctx1.createRadialGradient(W * 0.5, H * 0.35, 40, W * 0.5, H * 0.5, Math.max(W, H) * 0.85);
+      bg.addColorStop(0, "#162035");
+      bg.addColorStop(0.6, "#0d1320");
+      bg.addColorStop(1, "#05070c");
+      ctx1.fillStyle = bg;
+      ctx1.fillRect(0, 0, W, H);
+
+      stars1.forEach((s) => { s.update(dt); s.draw(ctx1); });
+
+      ctx1.strokeStyle = "rgba(255, 255, 255, 0.2)";
+      ctx1.lineWidth = 1;
+      ctx1.beginPath();
+      ctx1.moveTo(0, groundY);
+      ctx1.lineTo(W, groundY);
+      ctx1.stroke();
+
+      const currentTreeX = treeX();
+
+      if (state === STATE_INIT) {
+        draw2DSunflower(ctx1, initialSunflower.x, initialSunflower.y, initialSunflower.size);
+        ctx1.save();
+        ctx1.strokeStyle = "#ffd166";
+        ctx1.lineWidth = 1.5;
+        ctx1.shadowColor = "#ffd166";
+        ctx1.shadowBlur = 10;
+        ctx1.beginPath();
+        ctx1.moveTo(initialSunflower.x + 10, initialSunflower.y);
+        ctx1.lineTo(initialSunflower.x + 50, initialSunflower.y);
+        ctx1.lineTo(initialSunflower.x + 105, initialSunflower.y);
+        ctx1.stroke();
+
+        ctx1.font = "14px 'Playfair Display', serif";
+        ctx1.fillStyle = "#fff8e7";
+        ctx1.fillText("Click Aquí", initialSunflower.x + 55, initialSunflower.y - 8);
+        ctx1.restore();
+      }
+
+      if (state === STATE_FALLING) {
+        seed.vy += 220 * dt;
+        seed.y += seed.vy * dt;
+        seed.x += (currentTreeX - seed.x) * (2.2 * dt);
+        if (seed.size > 7) seed.size -= 10 * dt;
+        if (seed.y >= groundY) {
+          seed.y = groundY;
+          state = STATE_GROW_STEM;
+        }
+        ctx1.save();
+        ctx1.beginPath();
+        ctx1.arc(seed.x, seed.y, Math.max(3.5, seed.size * 0.28), 0, Math.PI * 2);
+        ctx1.fillStyle = "#ffd166";
+        ctx1.shadowColor = "#ffb703";
+        ctx1.shadowBlur = 12;
+        ctx1.fill();
+        ctx1.restore();
+      }
+
+      if (state >= STATE_GROW_STEM) {
+        if (state === STATE_GROW_STEM) {
+          stemProgress = Math.min(1, stemProgress + dt / 2.8);
+          if (stemProgress >= 1) state = STATE_GROW_BRANCHES;
+        }
+        const stemHeight = H * 0.38;
+        const currentTopY = groundY - stemHeight * stemProgress;
+        ctx1.fillStyle = "#26593f";
+        ctx1.beginPath();
+        ctx1.moveTo(currentTreeX - 11, groundY);
+        ctx1.quadraticCurveTo(currentTreeX - 5, groundY - (stemHeight * stemProgress * 0.5), currentTreeX - 2, currentTopY);
+        ctx1.lineTo(currentTreeX + 2, currentTopY);
+        ctx1.quadraticCurveTo(currentTreeX + 5, groundY - (stemHeight * stemProgress * 0.5), currentTreeX + 11, groundY);
+        ctx1.closePath();
+        ctx1.fill();
+      }
+
+      if (state >= STATE_GROW_BRANCHES) {
+        if (state === STATE_GROW_BRANCHES) {
+          branchProgress = Math.min(1, branchProgress + dt / 2.2);
+          if (branchProgress >= 1) {
+            state = STATE_BLOOM;
+            const heartCenterY = groundY - H * 0.44;
+            const heartScale = Math.min(W, H) * (W > 768 ? 0.019 : 0.024);
+            heartFlowers = buildHeartFlowers(currentTreeX, heartCenterY, heartScale, 180);
+          }
+        }
+        const branches = getBranchTree(currentTreeX, groundY);
+        ctx1.strokeStyle = "#26593f";
+        ctx1.lineCap = "round";
+        branches.forEach((b) => {
+          ctx1.lineWidth = 3.2;
+          ctx1.beginPath();
+          ctx1.moveTo(b.x0, b.y0);
+          const cx = b.x0 + (b.cpX - b.x0) * branchProgress;
+          const cy = b.y0 + (b.cpY - b.y0) * branchProgress;
+          const ex = b.x0 + (b.x1 - b.x0) * branchProgress;
+          const ey = b.y0 + (b.y1 - b.y0) * branchProgress;
+          ctx1.quadraticCurveTo(cx, cy, ex, ey);
+          ctx1.stroke();
+        });
+      }
+
+      if (state >= STATE_BLOOM) {
+        bloomTimeElapsed += dt;
+        let allBloomed = true;
+        heartFlowers.forEach((f) => {
+          if (bloomTimeElapsed > f.delay) {
+            if (f.currentSize < f.targetSize) {
+              f.currentSize = Math.min(f.targetSize, f.currentSize + 6.5 * dt);
+              allBloomed = false;
+            }
+          } else {
+            allBloomed = false;
+          }
+          if (f.currentSize > 0) draw2DSunflower(ctx1, f.x, f.y, f.currentSize, f.angle);
+        });
+
+        if (allBloomed && state === STATE_BLOOM) {
+          state = STATE_WIND;
+          letter.classList.add("show");
+          setTimeout(() => btnUniverse.classList.add("active"), 3000);
+        }
+      }
+
+      if (state === STATE_WIND) {
+        windSpawnTimer += dt;
+        if (windSpawnTimer > 0.35 && heartFlowers.length > 0) {
+          windSpawnTimer = 0;
+          const source = heartFlowers[Math.floor(Math.random() * heartFlowers.length)];
+          windParticles.push({
+            x: source.x,
+            y: source.y,
+            size: source.targetSize * (0.85 + Math.random() * 0.3),
+            angle: source.angle,
+            rotSpeed: (Math.random() - 0.5) * 1.5,
+            vx: -(85 + Math.random() * 110),
+            vy: 20 + Math.random() * 55,
+            wave: Math.random() * Math.PI * 2
+          });
+        }
+        for (let i = windParticles.length - 1; i >= 0; i--) {
+          const p = windParticles[i];
+          p.wave += 2.2 * dt;
+          p.x += p.vx * dt;
+          p.y += (p.vy + Math.sin(p.wave) * 30) * dt;
+          p.angle += p.rotSpeed * dt;
+          draw2DSunflower(ctx1, p.x, p.y, p.size, p.angle, 0.95);
+          if (p.y >= groundY - 2 || p.x < -40) windParticles.splice(i, 1);
+        }
+      }
+
+      requestAnimationFrame(loopScene1);
+    }
+    requestAnimationFrame(loopScene1);
+
+    btnUniverse.addEventListener("click", () => {
+      scene1.style.opacity = "0";
+      setTimeout(() => {
+        scene1.style.display = "none";
+        scene2.classList.add("active");
+        initGalaxyScene();
+      }, 1800);
+    });
+
+
+    /* ==============================================================
+       ESCENA 2: GALAXIA CÓSMICA REALISTA (THREE.JS MEJORADO)
+       ============================================================== */
+
+    // 8 RECUERDOS (Cambia las fotos y textos por los tuyos)
+    const memoryData = [
+      {
+        id: 1,
+        type: "bouquet",
+        title: "Mi persona favorita",
+        desc: "No hace falta un motivo especial. Cualquier día es mejor contigo cerca.",
+        img: "FOTO_1.jpg",
+        label: "Mi persona favorita ✨"
+      },
+      {
+        id: 2,
+        type: "sunflower",
+        title: "Gracias por existir",
+        desc: "Llegaste a iluminar mi vida con tu luz y tu alegría contagiosa.",
+        img: "FOTO_2.jpg",
+        label: "Gracias por existir 💛"
+      },
+      {
+        id: 3,
+        type: "sunflower",
+        title: "Atesoro tu amor",
+        desc: "Cada abrazo tuyo me da una paz que no encuentro en ningún otro lugar.",
+        img: "FOTO_3.webp",
+        label: "Atesoro tu compañía 🌻"
+      },
+      {
+        id: 4,
+        type: "bouquet",
+        title: "Siempre brillas",
+        desc: "Incluso en los días nublados, tu sonrisa ilumina todo a tu alrededor.",
+        img: "FOTO_4.webp",
+        label: "Siempre brillas ☀️"
+      },
+      {
+        id: 5,
+        type: "sunflower",
+        title: "Nuestra historia",
+        desc: "Un viaje hermoso que elegiría vivir una y un millón de veces más.",
+        img: "FOTO_5.jpeg",
+        label: "Nuestra historia 📖"
+      },
+      {
+        id: 6,
+        type: "sunflower",
+        title: "Tú y yo",
+        desc: "El mejor equipo del mundo entero.",
+        img: "FOTO_6.jpeg",
+        label: "Juntos por siempre 💫"
+      },
+      {
+        id: 7,
+        type: "bouquet",
+        title: "Eres mi hogar",
+        desc: "Donde sea que estés, ese es el lugar donde quiero estar.",
+        img: "FOTO_7.jpeg",
+        label: "Eres mi calma 🌿"
+      },
+      {
+        id: 8,
+        type: "sunflower",
+        title: "Te amo infinitamente",
+        desc: "En este y en todos los universos posibles.",
+        img: "FOTO_8.jpg",
+        label: "¡Te amo! 💛"
+      }
+    ];
+
+    let scene3D, camera3D, renderer3D;
+    let interactiveSprites = [];
+    let galaxyGroup;
+    let raycaster, mouse;
+    let isDragging = false;
+    let previousMousePosition = { x: 0, y: 0 };
+    let targetRotationX = 0.45;
+    let targetRotationY = 0;
+    let cameraDistance = 125;
+    let targetCameraDistance = 125;
+
+    // 1. GENERADOR DE TEXTURA SUAVE DE POLVO CÓSMICO (Elimina los cubos feos)
+    function createGlowPointTexture() {
+      const c = document.createElement("canvas");
+      c.width = 64;
+      c.height = 64;
+      const ctx = c.getContext("2d");
+      const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, "rgba(255, 255, 255, 1)");
+      grad.addColorStop(0.18, "rgba(255, 225, 120, 0.9)");
+      grad.addColorStop(0.45, "rgba(255, 150, 20, 0.35)");
+      grad.addColorStop(0.75, "rgba(200, 80, 0, 0.08)");
+      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 64, 64);
+      return new THREE.CanvasTexture(c);
+    }
+
+    // 2. TEXTURA DE GIRASOL REALISTA Y DETALLADO
+    function createRealisticSunflowerTexture() {
+      const c = document.createElement("canvas");
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext("2d");
+      const cx = 128, cy = 128;
+
+      // Resplandor áurico dorado
+      const aura = ctx.createRadialGradient(cx, cy, 30, cx, cy, 125);
+      aura.addColorStop(0, "rgba(255, 200, 40, 0.35)");
+      aura.addColorStop(0.7, "rgba(255, 140, 0, 0.12)");
+      aura.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 125, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Capa de hojas verdes de soporte
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = "#1e4d2b";
+      for (let i = 0; i < 6; i++) {
+        ctx.rotate((Math.PI * 2) / 6);
+        ctx.beginPath();
+        ctx.ellipse(82, 0, 26, 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 3 Capas de pétalos botánicos superpuestos
+      const layers = [
+        { count: 24, r: 85, rx: 34, ry: 9.5, fill: "#e07a00", stroke: "#b35900" },
+        { count: 24, r: 76, rx: 32, ry: 9.0, fill: "#ffb703", stroke: "#e07a00" },
+        { count: 20, r: 64, rx: 28, ry: 8.5, fill: "#ffd166", stroke: "#f77f00" }
+      ];
+
+      layers.forEach((l, lIdx) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.fillStyle = l.fill;
+        ctx.strokeStyle = l.stroke;
+        ctx.lineWidth = 0.8;
+        const offset = lIdx * 0.15;
+        for (let i = 0; i < l.count; i++) {
+          ctx.save();
+          ctx.rotate((i * Math.PI * 2) / l.count + offset);
+          ctx.beginPath();
+          // Pétalo con punta suave
+          ctx.moveTo(35, 0);
+          ctx.quadraticCurveTo(l.r * 0.6, -l.ry, l.r, 0);
+          ctx.quadraticCurveTo(l.r * 0.6, l.ry, 35, 0);
+          ctx.fill();
+          ctx.stroke();
+
+          // Nervadura central sutil del pétalo
+          ctx.strokeStyle = "rgba(160, 60, 0, 0.4)";
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(38, 0);
+          ctx.lineTo(l.r * 0.85, 0);
+          ctx.stroke();
+
+          ctx.restore();
+        }
+        ctx.restore();
+      });
+
+      // Disco central botánico con espiral de semillas
+      const centerGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 38);
+      centerGrad.addColorStop(0, "#190d06");
+      centerGrad.addColorStop(0.65, "#3d2010");
+      centerGrad.addColorStop(0.9, "#633718");
+      centerGrad.addColorStop(1, "#c9822a");
+      ctx.fillStyle = centerGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 38, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Semillas / polen en espiral áurea
+      for (let i = 0; i < 180; i++) {
+        const phi = i * 137.5 * (Math.PI / 180);
+        const rad = Math.sqrt(i) * 2.7;
+        const px = cx + rad * Math.cos(phi);
+        const py = cy + rad * Math.sin(phi);
+        ctx.fillStyle = i > 120 ? "#ffca3a" : (i % 2 === 0 ? "#24130a" : "#4a2813");
+        ctx.beginPath();
+        ctx.arc(px, py, i > 140 ? 1.4 : 1.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    // 3. TEXTURA DE RAMILLETE / BOUQUET DE FLORES AMARILLAS
+    function createBouquetTexture() {
+      const c = document.createElement("canvas");
+      c.width = 256;
+      c.height = 256;
+      const ctx = c.getContext("2d");
+      const cx = 128, cy = 110;
+
+      // Resplandor
+      const aura = ctx.createRadialGradient(cx, cy, 20, cx, cy, 120);
+      aura.addColorStop(0, "rgba(255, 215, 0, 0.35)");
+      aura.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = aura;
+      ctx.beginPath();
+      ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Tallos verdes y lazo
+      ctx.strokeStyle = "#1b4d24";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(115, 160); ctx.lineTo(125, 230);
+      ctx.moveTo(128, 160); ctx.lineTo(128, 235);
+      ctx.moveTo(140, 160); ctx.lineTo(132, 230);
+      ctx.stroke();
+
+      // Lazo dorado
+      ctx.fillStyle = "#ffb703";
+      ctx.beginPath();
+      ctx.ellipse(128, 195, 12, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Grupo de rosas/flores amarillas redondeadas
+      const buds = [
+        { x: 128, y: 75, r: 24 },
+        { x: 95, y: 100, r: 22 },
+        { x: 160, y: 100, r: 22 },
+        { x: 110, y: 135, r: 21 },
+        { x: 148, y: 135, r: 21 },
+        { x: 128, y: 112, r: 25 },
+        { x: 75, y: 120, r: 18 },
+        { x: 180, y: 120, r: 18 }
+      ];
+
+      buds.forEach(b => {
+        const roseGrad = ctx.createRadialGradient(b.x - 4, b.y - 4, 3, b.x, b.y, b.r);
+        roseGrad.addColorStop(0, "#fff176");
+        roseGrad.addColorStop(0.4, "#ffd54f");
+        roseGrad.addColorStop(0.85, "#ffb300");
+        roseGrad.addColorStop(1, "#f57c00");
+        ctx.fillStyle = roseGrad;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pétalos ondulados dentro de la rosa
+        ctx.strokeStyle = "rgba(180, 80, 0, 0.4)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r * 0.55, 0.2, Math.PI * 1.5);
+        ctx.stroke();
+      });
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    // 4. TEXTURA DE ETIQUETA FLOTANTE CON RESPLANDOR
+    function createGlowLabelTexture(text) {
+      const c = document.createElement("canvas");
+      c.width = 384;
+      c.height = 72;
+      const ctx = c.getContext("2d");
+      ctx.font = "bold 28px 'Caveat', cursive";
+      ctx.fillStyle = "#ffffff";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#ffb703";
+      ctx.shadowBlur = 12;
+      ctx.fillText(text, 192, 45);
+      return new THREE.CanvasTexture(c);
+    }
+
+    function initGalaxyScene() {
+      const container = document.getElementById("webgl-canvas");
+      scene3D = new THREE.Scene();
+      scene3D.fog = new THREE.FogExp2(0x030408, 0.0018);
+
+      camera3D = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera3D.position.set(0, 58, cameraDistance);
+      camera3D.lookAt(0, 0, 0);
+
+      renderer3D = new THREE.WebGLRenderer({ canvas: container, antialias: true });
+      renderer3D.setSize(window.innerWidth, window.innerHeight);
+      renderer3D.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      raycaster = new THREE.Raycaster();
+      mouse = new THREE.Vector2();
+
+      galaxyGroup = new THREE.Group();
+      scene3D.add(galaxyGroup);
+
+      const glowPointTex = createGlowPointTexture();
+
+      // ================= BRAZOS EN ESPIRAL DE LA GALAXIA =================
+      const particleCount = 28000;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+      const colors = new Float32Array(particleCount * 3);
+
+      const colorCore = new THREE.Color("#fff7c2");
+      const colorMid1 = new THREE.Color("#ffd166");
+      const colorMid2 = new THREE.Color("#f77f00");
+      const colorArmEdge = new THREE.Color("#d62828");
+      const colorOuterDust = new THREE.Color("#4a2800");
+
+      for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        const radius = Math.pow(Math.random(), 2.1) * 96;
+        const spinAngle = radius * 0.32;
+        const branchCount = 3;
+        const branchAngle = ((i % branchCount) * (Math.PI * 2)) / branchCount;
+
+        // Difusión orgánica
+        const randomX = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 3.8 * (radius * 0.12);
+        const randomY = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 2.8 * (radius * 0.09);
+        const randomZ = Math.pow(Math.random(), 3) * (Math.random() < 0.5 ? 1 : -1) * 3.8 * (radius * 0.12);
+
+        positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
+        positions[i3 + 1] = randomY;
+        positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+
+        // Color suave según distancia
+        const mixed = colorCore.clone();
+        if (radius < 18) {
+          mixed.lerp(colorMid1, radius / 18);
+        } else if (radius < 45) {
+          mixed.lerp(colorMid2, (radius - 18) / 27);
+        } else if (radius < 75) {
+          mixed.lerp(colorArmEdge, (radius - 45) / 30);
+        } else {
+          mixed.lerp(colorOuterDust, (radius - 75) / 21);
+        }
+
+        colors[i3] = mixed.r;
+        colors[i3 + 1] = mixed.g;
+        colors[i3 + 2] = mixed.b;
+      }
+
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+      const galaxyMat = new THREE.PointsMaterial({
+        size: 3.5,
+        map: glowPointTex,
+        sizeAttenuation: true,
+        depthWrite: false,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        vertexColors: true
+      });
+      const galaxyPoints = new THREE.Points(geometry, galaxyMat);
+      galaxyGroup.add(galaxyPoints);
+
+      // ================= DISCO DE ACRECIÓN Y AGUJERO NEGRO CÓSMICO =================
+      const diskGeo = new THREE.RingGeometry(3.5, 12.5, 64);
+      const diskMat = new THREE.MeshBasicMaterial({
+        color: 0xffe066,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending
+      });
+      const diskMesh = new THREE.Mesh(diskGeo, diskMat);
+      diskMesh.rotation.x = Math.PI / 2;
+      galaxyGroup.add(diskMesh);
+
+      // Halo vertical curvado estilo Gargantua
+      const haloGeo = new THREE.RingGeometry(3.6, 11, 48);
+      const haloMesh = new THREE.Mesh(haloGeo, diskMat);
+      haloMesh.rotation.y = Math.PI / 4;
+      galaxyGroup.add(haloMesh);
+
+      // Event Horizon (Centro completamente negro)
+      const blackHole = new THREE.Mesh(
+        new THREE.SphereGeometry(3.4, 32, 32),
+        new THREE.MeshBasicMaterial({ color: 0x000000 })
+      );
+      galaxyGroup.add(blackHole);
+
+      // ================= FLOR DE POLVO DORADO FLOTANTE (TIKTOK STYLE) =================
+      const flowerGeo = new THREE.BufferGeometry();
+      const flowerParticleCount = 5500;
+      const flowerPos = new Float32Array(flowerParticleCount * 3);
+      const flowerCols = new Float32Array(flowerParticleCount * 3);
+      const gold = new THREE.Color("#fff275");
+      const deepGold = new THREE.Color("#ff9f1c");
+
+      for (let i = 0; i < flowerParticleCount; i++) {
+        const i3 = i * 3;
+        const theta = Math.random() * Math.PI * 2;
+        // 5 pétalos botánicos
+        const petalShape = Math.pow(Math.abs(Math.cos((5 * theta) / 2)), 1.4);
+        const r = (petalShape * 22 + Math.random() * 2.8) * Math.sqrt(Math.random());
+
+        flowerPos[i3] = r * Math.cos(theta) + (Math.random() - 0.5) * 1.5;
+        flowerPos[i3 + 1] = 27 + (Math.random() - 0.5) * 3;
+        flowerPos[i3 + 2] = r * Math.sin(theta) + (Math.random() - 0.5) * 1.5;
+
+        const c = gold.clone().lerp(deepGold, r / 25);
+        flowerCols[i3] = c.r;
+        flowerCols[i3 + 1] = c.g;
+        flowerCols[i3 + 2] = c.b;
+      }
+      flowerGeo.setAttribute("position", new THREE.BufferAttribute(flowerPos, 3));
+      flowerGeo.setAttribute("color", new THREE.BufferAttribute(flowerCols, 3));
+
+      const flowerMat = new THREE.PointsMaterial({
+        size: 3.2,
+        map: glowPointTex,
+        sizeAttenuation: true,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        vertexColors: true
+      });
+      const topCosmicFlower = new THREE.Points(flowerGeo, flowerMat);
+      galaxyGroup.add(topCosmicFlower);
+
+      // ================= 8 FLORES Y RAMOS FLOTANTES CON RECUERDOS =================
+      const sunflowerTex = createRealisticSunflowerTexture();
+      const bouquetTex = createBouquetTexture();
+
+      // Distribuir en 2 órbitas a diferentes alturas
+      const orbitConfig = [
+        { r: 40, h: 6 },
+        { r: 56, h: -4 },
+        { r: 43, h: 12 },
+        { r: 60, h: 4 },
+        { r: 42, h: -8 },
+        { r: 58, h: 14 },
+        { r: 44, h: 2 },
+        { r: 62, h: -6 }
+      ];
+
+      memoryData.forEach((mem, index) => {
+        const conf = orbitConfig[index % orbitConfig.length];
+        const angle = (index / memoryData.length) * Math.PI * 2;
+        const nodeGroup = new THREE.Group();
+
+        const activeTexture = mem.type === "bouquet" ? bouquetTex : sunflowerTex;
+        const spriteMat = new THREE.SpriteMaterial({ map: activeTexture, transparent: true });
+        const sprite = new THREE.Sprite(spriteMat);
+        sprite.scale.set(16, 16, 1);
+        sprite.userData = mem;
+        nodeGroup.add(sprite);
+        interactiveSprites.push(sprite);
+
+        // Texto con brillo debajo
+        const labelTex = createGlowLabelTexture(mem.label);
+        const labelMat = new THREE.SpriteMaterial({ map: labelTex, transparent: true });
+        const labelSprite = new THREE.Sprite(labelMat);
+        labelSprite.scale.set(19, 3.6, 1);
+        labelSprite.position.set(0, -9.5, 0);
+        nodeGroup.add(labelSprite);
+
+        nodeGroup.position.set(
+          Math.cos(angle) * conf.r,
+          conf.h,
+          Math.sin(angle) * conf.r
+        );
+
+        nodeGroup.userData = {
+          angle: angle,
+          speed: 0.0025 + (index % 2) * 0.0008,
+          radius: conf.r,
+          baseHeight: conf.h,
+          floatSpeed: 1.8 + Math.random()
+        };
+
+        galaxyGroup.add(nodeGroup);
+      });
+
+      // ================= CONTROLES DE INTERACCIÓN (GIRO Y ZOOM) =================
+      const domCanvas = renderer3D.domElement;
+
+      // Zoom con rueda de ratón
+      window.addEventListener("wheel", (e) => {
+        targetCameraDistance += e.deltaY * 0.08;
+        targetCameraDistance = Math.max(50, Math.min(220, targetCameraDistance));
+      }, { passive: true });
+
+      // Giro y arrastre
+      let initialPinchDist = 0;
+
+      function onPointerDown(e) {
+        if (e.touches && e.touches.length === 2) {
+          initialPinchDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          return;
+        }
+        isDragging = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        previousMousePosition = { x: clientX, y: clientY };
+      }
+
+      function onPointerMove(e) {
+        // Soporte de pellizco para zoom en celulares
+        if (e.touches && e.touches.length === 2) {
+          const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          const diff = initialPinchDist - dist;
+          targetCameraDistance += diff * 0.15;
+          targetCameraDistance = Math.max(50, Math.min(220, targetCameraDistance));
+          initialPinchDist = dist;
+          return;
+        }
+
+        if (!isDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const deltaX = clientX - previousMousePosition.x;
+        const deltaY = clientY - previousMousePosition.y;
+
+        targetRotationY += deltaX * 0.006;
+        targetRotationX += deltaY * 0.004;
+        targetRotationX = Math.max(0.08, Math.min(1.35, targetRotationX));
+
+        previousMousePosition = { x: clientX, y: clientY };
+      }
+
+      function onPointerUp() { isDragging = false; }
+
+      domCanvas.addEventListener("mousedown", onPointerDown);
+      window.addEventListener("mousemove", onPointerMove);
+      window.addEventListener("mouseup", onPointerUp);
+
+      domCanvas.addEventListener("touchstart", onPointerDown, { passive: true });
+      window.addEventListener("touchmove", onPointerMove, { passive: true });
+      window.addEventListener("touchend", onPointerUp);
+
+      // Clic para abrir el modal del recuerdo
+      domCanvas.addEventListener("click", (e) => {
+        const rect = domCanvas.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / domCanvas.clientWidth) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / domCanvas.clientHeight) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera3D);
+        const intersects = raycaster.intersectObjects(interactiveSprites);
+
+        if (intersects.length > 0) {
+          const clickedData = intersects[0].object.userData;
+          openMemoryModal(clickedData);
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        camera3D.aspect = window.innerWidth / window.innerHeight;
+        camera3D.updateProjectionMatrix();
+        renderer3D.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      animateGalaxy();
+    }
+
+    let clock = new THREE.Clock();
+    function animateGalaxy() {
+      requestAnimationFrame(animateGalaxy);
+      const elapsedTime = clock.getElapsedTime();
+
+      // Rotación suave
+      galaxyGroup.rotation.y += (targetRotationY - galaxyGroup.rotation.y) * 0.06 + 0.0016;
+      galaxyGroup.rotation.x += (targetRotationX - galaxyGroup.rotation.x) * 0.06;
+
+      // Suavizado del zoom
+      cameraDistance += (targetCameraDistance - cameraDistance) * 0.08;
+      camera3D.position.z = cameraDistance;
+
+      // Animación orbital y flotación ondulante
+      galaxyGroup.children.forEach((child) => {
+        if (child.userData && child.userData.speed) {
+          child.userData.angle += child.userData.speed;
+          child.position.x = Math.cos(child.userData.angle) * child.userData.radius;
+          child.position.z = Math.sin(child.userData.angle) * child.userData.radius;
+          child.position.y = child.userData.baseHeight + Math.sin(elapsedTime * child.userData.floatSpeed + child.userData.angle) * 1.8;
+        }
+      });
+
+      renderer3D.render(scene3D, camera3D);
+    }
+
+    /* ==============================================================
+       MODAL DE FOTO
+       ============================================================== */
+    const modalOverlay = document.getElementById("modal-overlay");
+    const modalImg = document.getElementById("modal-img");
+    const modalTitle = document.getElementById("modal-title");
+    const modalDesc = document.getElementById("modal-desc");
+    const modalClose = document.getElementById("modal-close");
+
+    function openMemoryModal(data) {
+      modalImg.src = data.img;
+      modalTitle.innerText = data.title;
+      modalDesc.innerText = data.desc;
+      modalOverlay.classList.add("open");
+    }
+
+    modalClose.addEventListener("click", () => modalOverlay.classList.remove("open"));
+    modalOverlay.addEventListener("click", (e) => {
+      if (e.target === modalOverlay) modalOverlay.classList.remove("open");
+    });
+  </script>
+</body>
+</html>
